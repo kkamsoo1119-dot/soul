@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>동물 친구들 마음 사전</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@700;800&family=Pretendard:wght@400;600;700;800;900&display=swap');
+        
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background-color: #6a442b;
+            background-image: 
+                radial-gradient(circle at 50% 30%, rgba(255,255,255,0.08) 0%, rgba(0,0,0,0.5) 100%),
+                repeating-linear-gradient(
+                    0deg,
+                    transparent,
+                    transparent 4px,
+                    rgba(0,0,0,0.03) 4px,
+                    rgba(0,0,0,0.03) 8px
+                );
+            min-height: 100vh;
+            color: #f8fafc;
+        }
+
+        .myeongjo {
+            font-family: 'Nanum Myeongjo', serif;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        .animate-float { animation: float 3s ease-in-out infinite; }
+
+        .square-card {
+            background: white;
+            border-radius: 16px;
+            border: 4px solid white;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.3);
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        .square-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 20px rgba(0,0,0,0.4);
+        }
+
+        .card-perspective { perspective: 1200px; }
+        .card-inner {
+            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform-style: preserve-3d;
+        }
+        .card-inner.flipped { transform: rotateY(180deg); }
+        .card-front, .card-back {
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+        .card-back { transform: rotateY(180deg); }
+
+        .scroll-hide::-webkit-scrollbar { display: none; }
+        .scroll-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .root-line {
+            stroke-dasharray: 100;
+            animation: drawRoot 1.5s ease-out forwards;
+        }
+        @keyframes drawRoot {
+            from { stroke-dashoffset: 100; }
+            to { stroke-dashoffset: 0; }
+        }
+    </style>
+</head>
+<body class="pb-16 text-slate-800">
+
+    <header class="max-w-4xl mx-auto px-6 pt-10 pb-6 text-center">
+        <div class="inline-block bg-white/10 text-white text-xs px-4 py-1.5 rounded-full font-bold mb-3 shadow-sm border border-white/20 backdrop-blur-sm">
+            🐾 동물 친구들과 함께하는 감정 빙산
+        </div>
+        <h1 class="myeongjo text-3xl md:text-4xl text-white font-extrabold leading-tight drop-shadow-lg">
+            내 마음을 닮은 동물 찾기
+        </h1>
+        <p class="text-sm text-white/80 mt-3 max-w-xl mx-auto leading-relaxed font-medium" id="header-desc">
+            지금 내 마음의 수면 위로 솟아오른 대표 감정은 무엇인가요? 
+            나와 같은 상황에 처한 동물 친구를 골라보세요.
+        </p>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-6">
+        
+        <!-- STEP 1: 대표 감정 10장 -->
+        <section id="step1-container" class="fade-in">
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-y-12 gap-x-6 mt-8" id="main-emotion-grid">
+                <!-- JS 동적 렌더링 -->
+            </div>
+        </section>
+
+        <!-- STEP 2: 세부 속마음 -->
+        <section id="step2-container" class="hidden fade-in">
+            <div class="flex justify-between items-center mb-6">
+                <button onclick="goToStep1()" class="bg-white/20 hover:bg-white/30 text-white font-bold px-4 py-2 rounded-xl shadow-sm text-sm transition-all flex items-center gap-2 border border-white/30 backdrop-blur-sm">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i> 수면 위로 돌아가기
+                </button>
+            </div>
+            
+            <div class="flex flex-col items-center mb-0 relative" id="selected-main-card">
+                <!-- JS 동적 렌더링 -->
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4" id="sub-emotion-grid">
+                <!-- JS 동적 렌더링 -->
+            </div>
+        </section>
+
+        <!-- STEP 3: 3D 마음 사전 활동 카드 -->
+        <section id="step3-container" class="hidden fade-in max-w-md mx-auto mt-4">
+            <div class="flex justify-between items-center mb-6">
+                <button onclick="goToStep2()" class="bg-white/20 hover:bg-white/30 text-white font-bold px-4 py-2 rounded-xl shadow-sm text-sm transition-all flex items-center gap-2 border border-white/30 backdrop-blur-sm">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i> 다른 속마음 고르기
+                </button>
+                <button onclick="toggleHealingSound()" id="sound-btn" class="bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-bold px-3 py-2 rounded-xl transition-all flex items-center gap-1 shadow-sm border border-emerald-400">
+                    <i data-lucide="music" class="w-4 h-4"></i>
+                    <span id="sound-btn-text">오르골 켜기</span>
+                </button>
+            </div>
+
+            <div id="card-render-zone"></div>
+            
+            <div class="mt-8 text-center">
+                <button onclick="openPrintDashboard()" class="bg-white hover:bg-slate-100 text-slate-800 font-extrabold px-8 py-3 rounded-full shadow-[0_0_15px_rgba(255,255,255,0.3)] hover:shadow-[0_0_25px_rgba(255,255,255,0.5)] transition-all flex items-center gap-2 text-sm mx-auto">
+                    <i data-lucide="printer" class="w-5 h-5"></i>
+                    <span>나의 동물 감정카드 내보내기</span>
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- 인쇄/대시보드 모달 -->
+    <div id="print-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 hidden flex justify-center items-center p-4">
+        <div class="bg-[#fdfbf7] rounded-3xl max-w-4xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden border border-slate-200">
+            <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+                <h3 class="myeongjo text-lg font-bold text-slate-800">나의 맞춤형 동물 카드 대시보드</h3>
+                <button onclick="closePrintDashboard()" class="p-1 hover:bg-slate-200 rounded-full transition-all text-slate-500">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto scroll-hide flex-1 space-y-6" id="print-preview-content">
+            </div>
+            <div class="p-4 bg-slate-100 border-t border-slate-200 flex gap-3 justify-end">
+                <button onclick="copyFormContent()" class="bg-sky-100 hover:bg-sky-200 text-sky-800 font-bold px-4 py-2 rounded-xl text-xs transition-all flex items-center gap-1">
+                    <i data-lucide="clipboard" class="w-4 h-4"></i>
+                    <span>패들릿용 데이터 전체 복사</span>
+                </button>
+                <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-900 text-white font-bold px-5 py-2 rounded-xl text-xs transition-all flex items-center gap-1">
+                    <i data-lucide="printer" class="w-4 h-4"></i>
+                    <span>인쇄 가동</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.audioCtx = null;
+        window.isSoundEnabled = false;
+
+        // 🔮 방대한 동물 친구들 감정 & 위로 데이터베이스 구축
+        // animal: 패들릿 텍스트 복사용 이모지 / image: 실제 화면에 보일 첨부 이미지
+        const emotionData = {
+            anger: {
+                id: "anger", shortName: "분노", name: "화 / 분노", eng: "Anger", animal: "🐻", image: "1.화분노.png",
+                sceneGrad: "linear-gradient(to bottom, #fca5a5, #ef4444)", 
+                comfort: "어흥! 불의를 참지 못하는 네 마음은 정말 정의로워. 하지만 불꽃이 너무 커지면 숲이 타버릴 수도 있어. 십 초만 눈을 감고 심호흡을 해보자!",
+                subs: [
+                    { id: "a1", name: "억울함", icon: "💧", desc: "나만 부당한 대우를 받은 것 같아 분한 마음" },
+                    { id: "a2", name: "무시당함", icon: "💢", desc: "존중받지 못하고 투명인간 취급을 당한 느낌" },
+                    { id: "a3", name: "서운함", icon: "💔", desc: "기대했던 마음이 무너져 내리며 섭섭한 감정" },
+                    { id: "a4", name: "조급함", icon: "⏱️", desc: "마음이 쫓기듯 여유가 없고 초조한 상태" },
+                    { id: "a5", name: "피로함", icon: "😫", desc: "에너지가 고갈되어 짜증으로 번지는 지친 마음" },
+                    { id: "a6", name: "곤란함", icon: "😓", desc: "상황이 난처하여 어찌할 바를 모르는 답답함" },
+                    { id: "a7", name: "억압감", icon: "⛓️", desc: "누군가나 상황에 짓눌려 숨쉬기 힘든 느낌" },
+                    { id: "a8", name: "침해당함", icon: "🚫", desc: "나의 권리가 무례하게 침범당한 불쾌함" },
+                    { id: "a9", name: "불공평함", icon: "⚖️", desc: "공정하지 않은 상황에 대한 합리적인 분노" },
+                    { id: "a10", name: "답답함", icon: "🧱", desc: "가슴이 꽉 막힌 듯한 심정" }
+                ]
+            },
+            annoy: {
+                id: "annoy", shortName: "짜증", name: "짜증 / 신경질", eng: "Annoyance", animal: "🦊", image: "2.짜증신경질.png",
+                sceneGrad: "linear-gradient(to bottom, #fed7aa, #fdba74)",
+                comfort: "모든 게 다 거슬리고 피곤할 때가 있지. 그럴 땐 꼬리를 말고 조용한 굴속에서 푹 쉬는 게 최고야.",
+                subs: [
+                    { id: "b1", name: "피곤함", icon: "🥱", desc: "너무 지쳐서 날카로워지는 상태" },
+                    { id: "b2", name: "과제 압박", icon: "📚", desc: "할 일이 산더미라 신경이 곤두서는 마음" },
+                    { id: "b3", name: "수면 부족", icon: "😵‍💫", desc: "잠이 부족해 예민해진 상태" },
+                    { id: "b4", name: "무력감", icon: "🫠", desc: "맘대로 할 수 없어 짜증으로 변하는 무기력" },
+                    { id: "b5", name: "귀찮음", icon: "😒", desc: "아무것도 하기 싫은 성가심" },
+                    { id: "b6", name: "갈등", icon: "⚔️", desc: "타인과의 차이에서 오는 거슬림" },
+                    { id: "b7", name: "불안정함", icon: "🫨", desc: "통제되지 않아 신경질이 나는 마음" },
+                    { id: "b8", name: "뜻대로 안됨", icon: "🧩", desc: "계획대로 풀리지 않아 솟아오르는 짜증" },
+                    { id: "b9", name: "예민함", icon: "⚡", desc: "작은 자극에도 과민 반응하는 상태" },
+                    { id: "b10", name: "거슬림", icon: "👁️", desc: "대상이 계속 눈과 귀를 자극함" }
+                ]
+            },
+            fear: {
+                id: "fear", shortName: "불안", name: "불안 / 초조", eng: "Anxiety", animal: "🐿️", image: "3.불안초조.png",
+                sceneGrad: "linear-gradient(to bottom, #1e3a8a, #4338ca)",
+                comfort: "귀가 쫑긋 서고 심장이 빨리 뛰는구나. 네가 그만큼 이 일을 중요하게 생각한다는 증거야. 넌 네 생각보다 훨씬 빠르고 날쌔단다!",
+                subs: [
+                    { id: "d1", name: "욕심", icon: "🌟", desc: "기대에 부응하려다 쫓기는 상태" },
+                    { id: "d2", name: "두려움", icon: "😰", desc: "작은 실수라도 날까 조마조마한 마음" },
+                    { id: "d3", name: "시선 의식", icon: "👀", desc: "남들이 나를 어떻게 생각할지 걱정함" },
+                    { id: "d4", name: "압박감", icon: "💯", desc: "결과에 대한 부담감으로 숨이 막히는 느낌" },
+                    { id: "d5", name: "준비 부족", icon: "⏳", desc: "시간은 없고 준비는 덜 된 아찔함" },
+                    { id: "d6", name: "불확실함", icon: "❓", desc: "결과를 예측할 수 없어 안절부절못함" },
+                    { id: "d7", name: "고립감", icon: "🏝️", desc: "나 혼자 이 위기를 겪어내야 한다는 두려움" },
+                    { id: "d8", name: "완벽주의", icon: "📏", desc: "티 하나 없는 결과를 위해 괴롭히는 마음" },
+                    { id: "d9", name: "과도한 긴장", icon: "⚡", desc: "온몸의 근육이 굳어버릴 정도로 경직된 상태" },
+                    { id: "d10", name: "부담감", icon: "🏋️", desc: "어깨에 무거운 짐을 진 불안" }
+                ]
+            },
+            bored: {
+                id: "bored", shortName: "무기력", name: "무기력 / 번아웃", eng: "Helplessness", animal: "🐼", image: "4.무기력번아웃.png",
+                sceneGrad: "linear-gradient(to bottom, #cbd5e1, #64748b)",
+                comfort: "아무것도 하기 싫은 날이 있지? 가만히 대나무 잎을 덮고 누워 하늘을 보다 보면 언젠가 다시 움직일 힘이 날 거야.",
+                subs: [
+                    { id: "c1", name: "막막함", icon: "🌫️", desc: "앞이 보이지 않고 어디로 가야 할지 모르는 느낌" },
+                    { id: "c2", name: "실패 두려움", icon: "📉", desc: "시도했다가 안 될까 봐 못하는 마음" },
+                    { id: "c3", name: "번아웃", icon: "🕯️", desc: "에너지를 다 태워버려 남은 것이 없는 상태" },
+                    { id: "c4", name: "흥미 잃음", icon: "💨", desc: "예전엔 좋았던 것들도 즐겁지 않은 상태" },
+                    { id: "c5", name: "자신감 저하", icon: "⬇️", desc: "내가 잘할 수 있을까 하는 의구심" },
+                    { id: "c6", name: "지침", icon: "🪫", desc: "몸도 마음도 무거워 한 발짝도 떼기 힘든 느낌" },
+                    { id: "c7", name: "외로움", icon: "🍂", desc: "혼자 남겨진 것 같은 쓸쓸함" },
+                    { id: "c8", name: "비교의식", icon: "⚖️", desc: "남들과 비교하며 스스로 작아지는 느낌" },
+                    { id: "c9", name: "목표 상실", icon: "🧭", desc: "무엇을 위해 하는지 길을 잃은 상태" },
+                    { id: "c10", name: "막연함", icon: "☁️", desc: "구체적인 원인 없이 붕 떠 있는 무력함" }
+                ]
+            },
+            sad: {
+                id: "sad", shortName: "우울", name: "슬픔 / 우울", eng: "Depression", animal: "🦦", image: "5. 슬픔우울.png",
+                sceneGrad: "linear-gradient(to bottom, #93c5fd, #3b82f6)",
+                comfort: "가슴 한구석이 텅 빈 것처럼 아프지? 내가 옆에 가만히 앉아 체온을 나눠줄게. 비가 그칠 때까지 내 옆에서 실컷 울어도 돼.",
+                subs: [
+                    { id: "e1", name: "그리움", icon: "🌠", desc: "과거나 멀리 있는 누군가를 몹시 생각함" },
+                    { id: "e2", name: "소외감", icon: "👤", desc: "무리 속에서 나만 동떨어져 있는 듯한 외로움" },
+                    { id: "e3", name: "공감 부재", icon: "🔇", desc: "내 마음을 알아주는 사람이 없다는 고독" },
+                    { id: "e4", name: "후회", icon: "⏪", desc: "되돌릴 수 없는 일에 마음이 묶여 아픈 상태" },
+                    { id: "e5", name: "자책", icon: "🪃", desc: "모든 잘못이 나에게 있는 것 같아 찌르는 마음" },
+                    { id: "e6", name: "허전함", icon: "🕳️", desc: "마음속에 큰 구멍이 뚫린 느낌" },
+                    { id: "e7", name: "위로 갈구", icon: "🫂", desc: "누군가 따뜻하게 안아주기를 바라는 마음" },
+                    { id: "e8", name: "속상함", icon: "🩹", desc: "일이 어긋나거나 상처받아 몹시 상한 상태" },
+                    { id: "e9", name: "상처받음", icon: "🩸", desc: "누군가의 말이나 행동에 깊이 베인 아픔" },
+                    { id: "e10", name: "서글픔", icon: "🌧️", desc: "이유 없이 세상이 우울해 보임" }
+                ]
+            },
+            joy: {
+                id: "joy", shortName: "기쁨", name: "기쁨 / 활력", eng: "Joy", animal: "🐶", image: "6. 기쁨활력.png",
+                sceneGrad: "linear-gradient(to bottom, #fde047, #4ade80)",
+                comfort: "꼬리가 떨어질 것처럼 신나! 네가 해낸 걸 보니 나까지 기분이 최고야. 이 찬란한 햇살을 온몸으로 마음껏 즐겨!",
+                subs: [
+                    { id: "f1", name: "인정받음", icon: "👍", desc: "나의 노력을 타인이 알아주어 기쁜 마음" },
+                    { id: "f2", name: "성취감", icon: "🏆", desc: "목표를 이루어내고 차오르는 뿌듯함" },
+                    { id: "f3", name: "소속감", icon: "🤝", desc: "내가 이곳의 일원이라는 것이 자랑스러움" },
+                    { id: "f4", name: "자유로움", icon: "🕊️", desc: "어떤 제약도 없이 날아갈 것 같은 홀가분함" },
+                    { id: "f5", name: "기대감", icon: "🎁", desc: "앞으로 일어날 좋은 일들을 상상하며 즐거워함" },
+                    { id: "f6", name: "든든함", icon: "🛡️", desc: "나를 지지해 주는 힘이 느껴지는 꽉 찬 느낌" },
+                    { id: "f7", name: "보람", icon: "🌱", desc: "나의 수고가 의미 있는 결실을 맺었음을 체감함" },
+                    { id: "f8", name: "자랑스러움", icon: "👑", desc: "내 자신이 대견하고 뽐내고 싶은 마음" },
+                    { id: "f9", name: "안도감", icon: "💨", desc: "걱정하던 일이 잘 해결되어 쓸어내림" },
+                    { id: "f10", name: "설레임", icon: "💓", desc: "긍정적인 흥분으로 심장이 요동침" }
+                ]
+            },
+            peace: {
+                id: "peace", shortName: "평온", name: "평온 / 만족", eng: "Peace", animal: "🐱", image: "7.평온만족.png",
+                sceneGrad: "linear-gradient(to bottom, #99f6e4, #5eead4)",
+                comfort: "골골골... 볕이 참 따스하네. 지금 이 순간의 나른함과 여유를 충분히 음미해봐. 억지로 바쁘게 쫓기지 않아도 괜찮단다.",
+                subs: [
+                    { id: "g1", name: "안심", icon: "😌", desc: "아무런 위협 없이 안전하다고 느끼는 편안함" },
+                    { id: "g2", name: "편안함", icon: "🛋️", desc: "긴장이 모두 풀려 릴랙스된 상태" },
+                    { id: "g3", name: "여유", icon: "☕", desc: "쫓기지 않고 시간을 내 뜻대로 쓸 수 있는 마음" },
+                    { id: "g4", name: "감사", icon: "🙏", desc: "주어진 모든 것에 대해 고마움을 느낌" },
+                    { id: "g5", name: "보호받음", icon: "🛖", desc: "안전한 울타리 안에 있다는 충만함" },
+                    { id: "g6", name: "충족감", icon: "🔋", desc: "모자람 없이 나의 필요가 채워진 느낌" },
+                    { id: "g7", name: "충분함", icon: "⭕", desc: "더 이상 바랄 것 없이 지금 완벽함" },
+                    { id: "g8", name: "무스트레스", icon: "🍃", desc: "나를 짓누르던 무거운 짐이 사라짐" },
+                    { id: "g9", name: "수용됨", icon: "👐", desc: "나를 온전히 인정받는 느낌" },
+                    { id: "g10", name: "조화로움", icon: "☯️", desc: "세상과 어긋남 없이 이어져 있음" }
+                ]
+            },
+            excite: {
+                id: "excite", shortName: "설렘", name: "설렘 / 기대", eng: "Excitement", animal: "🐹", image: "8. 설렘기대.png",
+                sceneGrad: "linear-gradient(to bottom, #fbcfe8, #f9a8d4)",
+                comfort: "해바라기 씨를 새로 발견한 것만큼 가슴이 두근거려. 네 앞에 펼쳐질 새로운 길이 얼마나 재미있을지 너무 기대된다!",
+                subs: [
+                    { id: "h1", name: "열망", icon: "🔥", desc: "새로운 도전을 완수하고 싶은 강한 열망" },
+                    { id: "h2", name: "호기심", icon: "🔎", desc: "미지의 세계에 대해 알고 싶어 눈이 반짝임" },
+                    { id: "h3", name: "희망", icon: "🌈", desc: "좋은 일이 생길 것이라 믿는 긍정성" },
+                    { id: "h4", name: "변화 욕구", icon: "🦋", desc: "새롭게 탈바꿈하고 싶은 마음" },
+                    { id: "h5", name: "의욕 충만", icon: "💪", desc: "당장이라도 뛰쳐나가 시작하고 싶은 에너지" },
+                    { id: "h6", name: "동기부여", icon: "💡", desc: "해낼 명확한 이유를 발견한 상태" },
+                    { id: "h7", name: "기분좋은 상상", icon: "💭", desc: "행복한 미래를 그리며 미소가 번짐" },
+                    { id: "h8", name: "성장 기대", icon: "📈", desc: "나은 내가 될 수 있다는 확신에 찬 떨림" },
+                    { id: "h9", name: "주도성", icon: "🚀", desc: "내 삶의 운전대를 쥐고 있다는 자각" },
+                    { id: "h10", name: "활기", icon: "✨", desc: "몸과 마음이 톡톡 튀는 에너지" }
+                ]
+            },
+            thank: {
+                id: "thank", shortName: "고마움", name: "고마움 / 신뢰", eng: "Gratitude", animal: "🐴", image: "9.고마움신뢰.png",
+                sceneGrad: "linear-gradient(to bottom, #e9d5ff, #d8b4fe)",
+                comfort: "내 포근한 품에 안긴 것처럼 참 든든하지? 서로 믿고 의지할 수 있다는 건 변치 않는 힘이 돼.",
+                subs: [
+                    { id: "i1", name: "지지받음", icon: "👏", desc: "내 편이 되어 나를 응원해주는 힘" },
+                    { id: "i2", name: "연결감", icon: "🔗", desc: "보이지 않는 끈으로 이어져 있는 뭉클함" },
+                    { id: "i3", name: "든든함", icon: "⛰️", desc: "기댈 수 있는 존재가 있어 편안함" },
+                    { id: "i4", name: "안도감", icon: "😌", desc: "위기에서 나를 건져준 손길에 느끼는 평화" },
+                    { id: "i5", name: "존중받음", icon: "🙇", desc: "나를 귀하게 여겨주어 가슴이 따뜻해짐" },
+                    { id: "i6", name: "유대감", icon: "💞", desc: "우리는 하나라는 단단한 애착" },
+                    { id: "i7", name: "따뜻함", icon: "🧣", desc: "차가웠던 마음을 녹여주는 다정한 온도" },
+                    { id: "i8", name: "보살핌", icon: "🥣", desc: "나를 덜어주는 섬세한 배려에 감동함" },
+                    { id: "i9", name: "친밀함", icon: "🤗", desc: "거리낌 없이 마음을 나눌 수 있는 사이" },
+                    { id: "i10", name: "다행스러움", icon: "🍀", desc: "혼자가 아니라는 사실에 가슴을 쓸어내림" }
+                ]
+            },
+            proud: {
+                id: "proud", shortName: "당당함", name: "당당함 / 자신감", eng: "Pride", animal: "🦁", image: "10. 당당함자신감.png",
+                sceneGrad: "linear-gradient(to bottom, #f5d0fe, #f0abfc)",
+                comfort: "넌 동물의 왕인 나처럼 위풍당당해. 어떤 어려움 앞에서도 네 자신을 믿고 나아가는 모습이 세상 멋지다!",
+                subs: [
+                    { id: "j1", name: "뿌듯함", icon: "🧗", desc: "역경을 극복하고 몹시 자랑스러움" },
+                    { id: "j2", name: "주도함", icon: "⚓", desc: "내가 이끌어간다는 확신과 리더십" },
+                    { id: "j3", name: "인정 충족", icon: "🏅", desc: "나의 가치가 찬사를 받아 자존감이 높아짐" },
+                    { id: "j4", name: "독립심", icon: "🦅", desc: "누구에게 의존하지 않아도 홀로 설 수 있음" },
+                    { id: "j5", name: "확신", icon: "🎯", desc: "내가 가는 길이 맞다는 흔들림 없는 마음" },
+                    { id: "j6", name: "역량 발휘", icon: "💡", desc: "가진 재능을 100% 쏟아부어 빛을 발함" },
+                    { id: "j7", name: "칭찬받음", icon: "🎉", desc: "진심 어린 찬사로 어깨가 으쓱해짐" },
+                    { id: "j8", name: "단단함", icon: "💎", desc: "비바람에도 흔들리지 않는 다이아몬드 같은 내면" },
+                    { id: "j9", name: "성장 체감", icon: "🌳", desc: "어제의 나보다 훌쩍 커버린 스스로를 느낌" },
+                    { id: "j10", name: "위풍당당", icon: "😎", desc: "세상을 정면으로 마주하는 거침없는 태도" }
+                ]
+            }
+        };
+
+        const psychologicalNeeds = ["자율성", "유능감", "관계성", "안전", "존중", "휴식", "성취", "소속감"];
+
+        let currentMainEmotion = null;
+        let currentSubEmotion = null;
+
+        function initApp() {
+            lucide.createIcons();
+            renderStep1();
+        }
+
+        // [Step 1] 수면 위 대표 감정 렌더링 (이미지 사용)
+        function renderStep1() {
+            document.getElementById('step1-container').classList.remove('hidden');
+            document.getElementById('step2-container').classList.add('hidden');
+            document.getElementById('step3-container').classList.add('hidden');
+            
+            document.getElementById('header-desc').innerText = "지금 내 마음의 수면 위로 솟아오른 대표 감정은 무엇인가요? 나와 같은 상황에 처한 동물 친구를 골라보세요.";
+
+            const grid = document.getElementById('main-emotion-grid');
+            grid.innerHTML = '';
+
+            Object.values(emotionData).forEach(emo => {
+                const cardHtml = `
+                    <div onclick="selectMainEmotion('${emo.id}')" class="flex flex-col items-center cursor-pointer group">
+                        <div class="w-32 h-32 md:w-40 md:h-40 rounded-full border-[6px] border-white shadow-lg relative overflow-hidden flex justify-center items-center z-0 transition-transform duration-300 group-hover:-translate-y-2 group-hover:shadow-2xl" style="background: ${emo.sceneGrad}">
+                            <!-- 카드 내부 그림자 효과 -->
+                            <div class="absolute inset-0 shadow-[inset_0_0_15px_rgba(0,0,0,0.2)] z-20 pointer-events-none"></div>
+                            <!-- 둥둥 떠다니는 첨부 이미지 대신 화면에 가득 차도록 변경 -->
+                            <img src="${emo.image}" alt="${emo.name}" class="w-full h-full object-cover z-10" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' fill=\\'%23ccc\\' viewBox=\\'0 0 24 24\\'><circle cx=\\'12\\' cy=\\'12\\' r=\\'10\\'/></svg>'" />
+                        </div>
+                        
+                        <!-- 흰색 이름표 바 -->
+                        <div class="bg-white w-28 md:w-32 pt-2 pb-2 -mt-4 z-10 rounded-b-2xl shadow-lg flex flex-col items-center transition-transform duration-300 group-hover:-translate-y-2 border-x-4 border-b-4 border-white">
+                            <h3 class="text-slate-800 font-extrabold text-lg md:text-xl leading-tight">${emo.shortName}</h3>
+                            <p class="text-slate-500 text-[10px] font-bold uppercase tracking-wider">${emo.eng}</p>
+                        </div>
+                    </div>
+                `;
+                grid.insertAdjacentHTML('beforeend', cardHtml);
+            });
+        }
+
+        // [Step 2] 선택된 메인 카드와 수면 아래 서브 카드 렌더링 (이미지 사용)
+        function selectMainEmotion(mainId) {
+            currentMainEmotion = emotionData[mainId];
+            
+            document.getElementById('step1-container').classList.add('hidden');
+            document.getElementById('step2-container').classList.remove('hidden');
+            
+            document.getElementById('header-desc').innerText = "수면 아래 뿌리 깊이 감춰진 속마음이에요. 현재 나를 가장 잘 설명하는 구체적인 감정을 골라보세요.";
+
+            // 상단 중앙에 선택된 원형 카드 고정
+            document.getElementById('selected-main-card').innerHTML = `
+                <div class="flex flex-col items-center z-10">
+                    <div class="w-32 h-32 md:w-40 md:h-40 rounded-full border-[6px] border-white shadow-lg relative overflow-hidden flex justify-center items-center" style="background: ${currentMainEmotion.sceneGrad}">
+                        <div class="absolute inset-0 shadow-[inset_0_0_15px_rgba(0,0,0,0.2)] z-20 pointer-events-none"></div>
+                        <img src="${currentMainEmotion.image}" alt="${currentMainEmotion.name}" class="w-full h-full object-cover z-10" />
+                    </div>
+                    <div class="bg-white w-28 md:w-32 pt-2 pb-2 -mt-4 rounded-b-2xl shadow-lg flex flex-col items-center border-x-4 border-b-4 border-white">
+                        <h3 class="text-slate-800 font-extrabold text-lg md:text-xl leading-tight">${currentMainEmotion.shortName}</h3>
+                        <p class="text-slate-500 text-[10px] font-bold uppercase tracking-wider">${currentMainEmotion.eng}</p>
+                    </div>
+                </div>
+                
+                <svg viewBox="0 0 800 100" class="w-full h-16 md:h-24 stroke-white/40 fill-none -mt-2 z-0" style="stroke-width: 3px; stroke-linecap: round;">
+                    <path d="M400,0 Q400,50 100,100" class="root-line" />
+                    <path d="M400,0 Q400,50 250,100" class="root-line" />
+                    <path d="M400,0 Q400,50 400,100" class="root-line" />
+                    <path d="M400,0 Q400,50 550,100" class="root-line" />
+                    <path d="M400,0 Q400,50 700,100" class="root-line" />
+                </svg>
+            `;
+
+            const grid = document.getElementById('sub-emotion-grid');
+            grid.innerHTML = '';
+
+            currentMainEmotion.subs.forEach((sub, idx) => {
+                const cardHtml = `
+                    <div onclick="selectSubEmotion('${sub.id}')" class="square-card flex flex-col group relative">
+                        <div class="absolute top-2 left-2 bg-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-black text-slate-700 shadow-sm z-20">${idx + 1}</div>
+                        
+                        <div class="h-24 w-full relative flex justify-center items-end overflow-hidden" style="background: ${currentMainEmotion.sceneGrad}">
+                            <div class="absolute inset-0 shadow-[inset_0_0_15px_rgba(0,0,0,0.1)] z-10 pointer-events-none"></div>
+                            <!-- 카드 안 첨부 이미지 배경으로 꽉 차게 -->
+                            <img src="${currentMainEmotion.image}" alt="${currentMainEmotion.name}" class="absolute inset-0 w-full h-full object-cover z-0 transition-transform group-hover:scale-110" />
+                            <div class="absolute bottom-2 right-2 bg-white/90 backdrop-blur-sm rounded-full p-1.5 shadow-md text-xl leading-none z-20">${sub.icon}</div>
+                        </div>
+                        
+                        <div class="p-3 bg-white text-center flex-1 flex flex-col justify-center border-t border-slate-100 relative z-20">
+                            <h4 class="font-bold text-slate-800 text-sm mb-1">${sub.name}</h4>
+                            <p class="text-[10px] text-slate-500 leading-snug break-keep">${sub.desc}</p>
+                        </div>
+                    </div>
+                `;
+                grid.insertAdjacentHTML('beforeend', cardHtml);
+            });
+            
+            const roots = document.querySelectorAll('.root-line');
+            roots.forEach(r => {
+                r.classList.remove('root-line');
+                void r.offsetWidth; 
+                r.classList.add('root-line');
+            });
+        }
+
+        function goToStep1() {
+            renderStep1();
+        }
+
+        // [Step 3] 3D 카드 영역 (이미지 사용)
+        function selectSubEmotion(subId) {
+            currentSubEmotion = currentMainEmotion.subs.find(s => s.id === subId);
+            
+            document.getElementById('step2-container').classList.add('hidden');
+            document.getElementById('step3-container').classList.remove('hidden');
+            document.getElementById('header-desc').innerText = "카드를 뒤집어 나의 진짜 마음을 기록하고, 동물 친구의 따뜻한 위로를 받아보세요.";
+
+            renderStep3Card();
+        }
+
+        function goToStep2() {
+            selectMainEmotion(currentMainEmotion.id);
+            document.getElementById('step3-container').classList.add('hidden');
+        }
+
+        function renderStep3Card() {
+            const container = document.getElementById('card-render-zone');
+            
+            const savedNarrative = localStorage.getItem(`animal_narrative_${currentSubEmotion.id}`) || "";
+            const savedSlogan = localStorage.getItem(`animal_slogan_${currentSubEmotion.id}`) || "";
+            const savedNeed = localStorage.getItem(`animal_need_${currentSubEmotion.id}`) || psychologicalNeeds[0];
+
+            const cardHtml = `
+                <div class="card-perspective w-full h-[550px]">
+                    <div class="card-inner w-full h-full relative cursor-pointer" id="active-card-inner">
+                        
+                        <!-- 앞면 -->
+                        <div class="card-front absolute w-full h-full bg-white rounded-[2rem] shadow-xl border-[6px] border-white flex flex-col overflow-hidden" onclick="flipActiveCard([523.25, 659.25, 783.99])">
+                            
+                            <div class="w-full h-64 relative flex flex-col justify-center items-center rounded-t-xl overflow-hidden" style="background: ${currentMainEmotion.sceneGrad}">
+                                <div class="absolute inset-0 shadow-[inset_0_0_20px_rgba(0,0,0,0.2)] z-10 pointer-events-none"></div>
+                                <img src="${currentMainEmotion.image}" alt="${currentMainEmotion.name}" class="absolute inset-0 w-full h-full object-cover z-0" />
+                                <div class="relative z-20 flex items-center justify-center animate-float">
+                                    <span class="text-[4rem] bg-white/90 backdrop-blur-md rounded-full shadow-2xl p-4 leading-none border-4 border-white/50">${currentSubEmotion.icon}</span>
+                                </div>
+                            </div>
+
+                            <div class="p-6 flex-1 flex flex-col justify-center text-center">
+                                <span class="inline-block px-3 py-1 rounded-full bg-slate-100 text-slate-500 text-[10px] font-black mx-auto mb-2">
+                                    대표 감정: ${currentMainEmotion.name}
+                                </span>
+                                <h2 class="myeongjo text-3xl font-extrabold text-slate-800 mb-3">
+                                    ${currentSubEmotion.name}
+                                </h2>
+                                <p class="text-sm text-slate-600 font-medium break-keep">
+                                    "${currentSubEmotion.desc}"
+                                </p>
+                            </div>
+
+                            <div class="p-4 bg-slate-50 border-t border-slate-100 flex justify-between items-center text-xs text-slate-500 font-bold rounded-b-xl">
+                                <span><i data-lucide="hand" class="w-4 h-4 inline text-sky-400"></i> 카드를 터치하세요</span>
+                                <span class="animate-pulse text-sky-600">성찰 일기장 열기 <i data-lucide="arrow-right" class="w-4 h-4 inline"></i></span>
+                            </div>
+                        </div>
+
+                        <!-- 뒷면 -->
+                        <div class="card-back absolute w-full h-full bg-[#fdfbf7] rounded-[2rem] p-6 shadow-xl border-[6px] border-white flex flex-col justify-between overflow-hidden text-slate-800">
+                            
+                            <div class="flex justify-between items-center mb-3">
+                                <span class="text-xs font-bold flex items-center gap-1 text-slate-500">
+                                    <i data-lucide="edit-3" class="w-4 h-4 text-emerald-500"></i> 마음 일기장
+                                </span>
+                                <button class="bg-white hover:bg-slate-100 text-slate-600 text-[10px] px-3 py-1 border border-slate-200 rounded-full font-bold transition-all shadow-sm" onclick="event.stopPropagation(); flipActiveCard([783.99, 659.25, 523.25])">
+                                    앞면 보기
+                                </button>
+                            </div>
+
+                            <div class="space-y-4 flex-1 overflow-y-auto scroll-hide">
+                                <div onclick="event.stopPropagation()">
+                                    <label class="text-[11px] font-bold mb-1.5 block text-slate-600">Q1. 어떤 상황에서 이 마음이 들었나요?</label>
+                                    <textarea id="card-narrative" oninput="saveCurrentCard()" class="w-full bg-white border border-slate-300 rounded-xl p-3 text-xs focus:border-sky-400 transition-all placeholder-slate-400" placeholder="솔직한 마음을 적어주세요. 자동 저장됩니다." rows="3">${savedNarrative}</textarea>
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-3" onclick="event.stopPropagation()">
+                                    <div>
+                                        <label class="text-[11px] font-bold mb-1.5 block text-slate-600">Q2. 내가 진짜 원하는 것</label>
+                                        <select id="card-need" onchange="saveCurrentCard()" class="w-full bg-white border border-slate-300 rounded-xl p-2.5 text-xs focus:border-sky-400 transition-all cursor-pointer">
+                                            ${psychologicalNeeds.map(need => `<option value="${need}" ${savedNeed === need ? "selected" : ""}>${need}</option>`).join("")}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="text-[11px] font-bold mb-1.5 block text-slate-600">Q3. 나를 위한 응원 한마디</label>
+                                        <input type="text" id="card-slogan" oninput="saveCurrentCard()" value="${savedSlogan}" class="w-full bg-white border border-slate-300 rounded-xl p-2.5 text-xs focus:border-sky-400 transition-all placeholder-slate-400" placeholder="나에게 해주고픈 말">
+                                    </div>
+                                </div>
+
+                                <div class="bg-white border border-slate-200 rounded-2xl p-4 mt-2 relative shadow-sm">
+                                    <div class="absolute -top-6 -right-2 w-14 h-14 drop-shadow-sm z-10 rounded-full overflow-hidden border-2 border-white shadow-md">
+                                        <img src="${currentMainEmotion.image}" alt="캐릭터" class="w-full h-full object-cover">
+                                    </div>
+                                    <span class="text-[10px] text-sky-600 font-black block mb-1">${currentMainEmotion.shortName} 동물의 편지</span>
+                                    <p class="text-xs text-slate-700 leading-relaxed italic break-keep font-medium relative z-20">
+                                        "${currentMainEmotion.comfort}"
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            `;
+            
+            container.innerHTML = cardHtml;
+            lucide.createIcons();
+        }
+
+        function flipActiveCard(freqs) {
+            document.getElementById('active-card-inner').classList.toggle('flipped');
+            playHealingChime(freqs);
+        }
+
+        function saveCurrentCard() {
+            const narrative = document.getElementById('card-narrative').value;
+            const slogan = document.getElementById('card-slogan').value;
+            const need = document.getElementById('card-need').value;
+
+            localStorage.setItem(`animal_narrative_${currentSubEmotion.id}`, narrative);
+            localStorage.setItem(`animal_slogan_${currentSubEmotion.id}`, slogan);
+            localStorage.setItem(`animal_need_${currentSubEmotion.id}`, need);
+            
+            let savedCards = JSON.parse(localStorage.getItem('animal_saved_cards') || '[]');
+            if (!savedCards.includes(currentSubEmotion.id)) {
+                savedCards.push(currentSubEmotion.id);
+                localStorage.setItem('animal_saved_cards', JSON.stringify(savedCards));
+            }
+        }
+
+        function playHealingChime(freqs) {
+            if (!window.isSoundEnabled) return;
+            try {
+                if (!window.audioCtx) window.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (window.audioCtx.state === 'suspended') window.audioCtx.resume();
+
+                freqs.forEach((freq, idx) => {
+                    const timeDelay = idx * 0.15;
+                    const osc = window.audioCtx.createOscillator();
+                    const gain = window.audioCtx.createGain();
+
+                    osc.type = idx % 2 === 0 ? 'sine' : 'triangle';
+                    osc.frequency.setValueAtTime(freq, window.audioCtx.currentTime + timeDelay);
+
+                    gain.gain.setValueAtTime(0.2, window.audioCtx.currentTime + timeDelay);
+                    gain.gain.exponentialRampToValueAtTime(0.001, window.audioCtx.currentTime + timeDelay + 1.8);
+
+                    osc.connect(gain);
+                    gain.connect(window.audioCtx.destination);
+                    osc.start(window.audioCtx.currentTime + timeDelay);
+                    osc.stop(window.audioCtx.currentTime + timeDelay + 2.0);
+                });
+            } catch (e) { console.log(e); }
+        }
+
+        function toggleHealingSound() {
+            window.isSoundEnabled = !window.isSoundEnabled;
+            const btnText = document.getElementById("sound-btn-text");
+            const btn = document.getElementById("sound-btn");
+            if (window.isSoundEnabled) {
+                btnText.innerText = "오르골 켜짐";
+                btn.classList.remove("bg-emerald-500");
+                btn.classList.add("bg-emerald-600");
+                playHealingChime([1046.50, 1318.51, 1567.98, 2093.00]);
+            } else {
+                btnText.innerText = "오르골 켜기";
+                btn.classList.add("bg-emerald-500");
+                btn.classList.remove("bg-emerald-600");
+            }
+        }
+
+        // 인쇄 대시보드 로직 (이미지 적용)
+        function openPrintDashboard() {
+            const previewContainer = document.getElementById("print-preview-content");
+            previewContainer.innerHTML = "";
+
+            const savedIds = JSON.parse(localStorage.getItem('animal_saved_cards') || '[]');
+            
+            if (savedIds.length === 0) {
+                previewContainer.innerHTML = `
+                    <div class="text-center py-12">
+                        <i data-lucide="alert-circle" class="w-12 h-12 text-slate-400 mx-auto mb-3"></i>
+                        <p class="text-slate-600 text-sm font-bold">작성된 동물 감정 기록이 아직 없습니다.</p>
+                        <p class="text-xs text-slate-500 mt-1">카드를 뒤집어 마음 일기장을 작성해 주세요!</p>
+                    </div>
+                `;
+            } else {
+                savedIds.forEach(id => {
+                    let subInfo = null;
+                    let mainInfo = null;
+                    for (const key in emotionData) {
+                        const found = emotionData[key].subs.find(s => s.id === id);
+                        if (found) {
+                            subInfo = found;
+                            mainInfo = emotionData[key];
+                            break;
+                        }
+                    }
+
+                    if (subInfo && mainInfo) {
+                        const narrative = localStorage.getItem(`animal_narrative_${id}`) || "";
+                        const slogan = localStorage.getItem(`animal_slogan_${id}`) || "";
+                        const need = localStorage.getItem(`animal_need_${id}`) || "";
+
+                        const previewHtml = `
+                            <div class="border border-slate-200 rounded-3xl p-6 bg-white shadow-sm flex flex-col md:flex-row gap-6">
+                                <div class="md:w-1/3 flex flex-col items-center justify-center text-center rounded-2xl p-4 border border-slate-100 overflow-hidden relative" style="background: ${mainInfo.sceneGrad}">
+                                    <img src="${mainInfo.image}" alt="${mainInfo.name}" class="absolute inset-0 w-full h-full object-cover z-0 opacity-50 blur-[2px]" />
+                                    <div class="absolute inset-0 bg-black/20 z-10"></div>
+                                    <div class="flex items-end drop-shadow-md relative z-20 mt-4">
+                                        <div class="w-20 h-20 rounded-full overflow-hidden border-4 border-white shadow-lg">
+                                            <img src="${mainInfo.image}" alt="${mainInfo.name}" class="w-full h-full object-cover" />
+                                        </div>
+                                        <span class="absolute bottom-[-10px] right-[-15px] text-3xl bg-white rounded-full p-2 leading-none shadow-xl z-30">${subInfo.icon}</span>
+                                    </div>
+                                    <h4 class="myeongjo font-extrabold text-white text-xl mt-6 drop-shadow-lg relative z-20">${subInfo.name}</h4>
+                                </div>
+                                <div class="md:w-2/3 space-y-3">
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <span class="bg-slate-800 text-white text-[10px] px-2 py-0.5 rounded font-black">나의 성찰</span>
+                                        <span class="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded font-bold border border-emerald-200">욕구: ${need || "미선택"}</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-[10px] text-slate-400 font-bold block mb-1">상황 기록:</span>
+                                        <p class="text-xs text-slate-700 leading-relaxed font-semibold bg-slate-50 p-3 rounded-lg border border-slate-100">${narrative || "작성 안 함"}</p>
+                                    </div>
+                                    <div>
+                                        <span class="text-[10px] text-slate-400 font-bold block mb-1">나를 위한 응원:</span>
+                                        <p class="text-xs text-sky-600 font-black italic bg-sky-50 p-3 rounded-lg border border-sky-100">"${slogan || "작성 안 함"}"</p>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        previewContainer.insertAdjacentHTML("beforeend", previewHtml);
+                    }
+                });
+            }
+
+            lucide.createIcons();
+            document.getElementById("print-modal").classList.remove("hidden");
+        }
+
+        function closePrintDashboard() {
+            document.getElementById("print-modal").classList.add("hidden");
+        }
+
+        // 복사할 때는 여전히 귀여운 동물 이모지가 함께 복사되도록 유지했습니다.
+        function copyFormContent() {
+            const savedIds = JSON.parse(localStorage.getItem('animal_saved_cards') || '[]');
+            if (savedIds.length === 0) {
+                alert("복사할 데이터가 없습니다. 카드를 작성해 주세요.");
+                return;
+            }
+
+            let compiledText = `🐾 [동물 친구들 마음 사전 성찰 기록]\n\n`;
+
+            savedIds.forEach(id => {
+                let subInfo = null;
+                let mainInfo = null;
+                for (const key in emotionData) {
+                    const found = emotionData[key].subs.find(s => s.id === id);
+                    if (found) { subInfo = found; mainInfo = emotionData[key]; break; }
+                }
+
+                if (subInfo && mainInfo) {
+                    const narrative = localStorage.getItem(`animal_narrative_${id}`) || "";
+                    const slogan = localStorage.getItem(`animal_slogan_${id}`) || "";
+                    const need = localStorage.getItem(`animal_need_${id}`) || "";
+
+                    compiledText += `🦁 동물 친구: ${mainInfo.animal} (${mainInfo.shortName})\n`;
+                    compiledText += `💦 진짜 속마음: ${subInfo.icon} ${subInfo.name}\n`;
+                    compiledText += `🌱 나의 욕구: ${need}\n`;
+                    compiledText += `📝 언제 그랬냐면: ${narrative}\n`;
+                    compiledText += `📢 응원 한마디: "${slogan}"\n`;
+                    compiledText += `-----------------------------------------\n\n`;
+                }
+            });
+
+            navigator.clipboard.writeText(compiledText).then(() => {
+                alert("✨ 성찰 데이터가 클립보드에 복사되었습니다!\n패들릿이나 게시판에 붙여넣기(Ctrl+V) 하세요.");
+            }).catch(() => {
+                alert("자동 복사 권한 오류가 발생했습니다. 직접 드래그하여 복사해 주세요.");
+            });
+        }
+
+        initApp();
+    </script>
+</body>
+</html>
