@@ -141,6 +141,16 @@
 
     </main>
 
+    <!-- 1. M.A.P.S. 통합 앱으로 돌아가는 상시 노출 홈 버튼 (투명한 글래스모피즘 스타일) -->
+    <div class="max-w-6xl mx-auto px-6 mt-8 mb-4">
+        <a href="https://kkamsoo1119-dot.github.io/M.A.P.S./" class="flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white border border-white/30 px-4 py-4 font-bold rounded-xl transition-all w-full backdrop-blur-sm shadow-lg">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+            </svg>
+            M.A.P.S. 첫 화면으로 이동
+        </a>
+    </div>
+
     <div id="print-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 hidden flex justify-center items-center p-4">
         <div class="bg-[#fdfbf7] rounded-3xl max-w-4xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden border border-slate-200">
             <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
@@ -167,6 +177,23 @@
     <script>
         window.audioCtx = null;
         window.isSoundEnabled = false;
+
+        // 3. 🔮 동물의 편지에 추가될 무작위 위로 및 응원 메시지 풀 (요청하신 데이터)
+        const cheeringMessages = [
+            "화이팅", "힘내", "괜찮아", "수고했어", "힘내라", "힘내자", "할수있다", "힘내 화이팅", "괜찮다", "빨리 자", 
+            "견뎌", "한숨자라", "내일은 다를 거야", "딱히없음", "나중에는 괜찮아 질거야", 
+            "지금 힘들어도 포기하지 말자. 오늘의 노력이 내일의 나를 더 성장시킬 거야.", "잘 할 수 있어", 
+            "넌 할수있어 열심히 해!", "요즘 많이힘들지 괜찮아 너는 할 수 있어화이팅", "고생했다", "좀만 더 노력하자", 
+            "수고했다", "조금있으면 방학이다", "열심히하자", "열심히해", "버티자", "두려워 하지 말라", 
+            "지금 힘들다고 쓰러지지 말고 성공하고 쓰러지자", "힘내!", "좀만 버티자", "얼마 안남았다", "어케튼 되것지", 
+            "엄마생각하기", "이번만 버티자", "죽기야 하겠나", "넌할수있어", "수고했어 오늘도", "조금만 더", 
+            "너를 응원할게", "정말 열심히 하는구나", "축구하자", "친한친구 . 바라만 봐도 위로가 됨 .", 
+            "이또한지나가리", "꼭 성공해서 맛있는 거 먹어야지", "잘한다", "포기하지말고 걍 해보자", "당구치자.", 
+            "끝까지 버티자", "조금만 더 버티자 힘내자", "오늘도 화이팅", "언젠간 좋은 날이 오겠지", "너의 편이야", 
+            "잠자자", "나중에 다 복이 된다", "해보고 못하겠다면 포기해도 좋지만 안하고 포기하는건 부끄러워해라", 
+            "화이팅!", "굿", "넌 할수있어", "할수있어", "할수있어", "응원할게", "나이스", "고생햇어", "남들도 다 그렇다", 
+            "놀자", "우리 엄마 목소리로 잘 하고 있다"
+        ];
 
         // 🔮 방대한 동물 친구들 감정 & 위로 데이터베이스 구축
         // animal: 패들릿 텍스트 복사용 이모지 / image: 실제 화면에 보일 첨부 이미지
@@ -448,7 +475,7 @@
             renderStep1();
         }
 
-        // [Step 3] 3D 카드 영역 (이미지 사용)
+        // [Step 3] 3D 카드 영역 (이미지 사용 및 위로 메시지 추가)
         function selectSubEmotion(subId) {
             currentSubEmotion = currentMainEmotion.subs.find(s => s.id === subId);
             
@@ -470,6 +497,9 @@
             const savedNarrative = localStorage.getItem(`animal_narrative_${currentSubEmotion.id}`) || "";
             const savedSlogan = localStorage.getItem(`animal_slogan_${currentSubEmotion.id}`) || "";
             const savedNeed = localStorage.getItem(`animal_need_${currentSubEmotion.id}`) || psychologicalNeeds[0];
+
+            // 3. 학생들의 따뜻한 말 한마디 중 하나를 무작위로 추출
+            const randomCheer = cheeringMessages[Math.floor(Math.random() * cheeringMessages.length)];
 
             const cardHtml = `
                 <div class="card-perspective w-full h-[550px]">
@@ -540,7 +570,8 @@
                                     </div>
                                     <span class="text-[10px] text-sky-600 font-black block mb-1">${currentMainEmotion.shortName} 동물의 편지</span>
                                     <p class="text-xs text-slate-700 leading-relaxed italic break-keep font-medium relative z-20">
-                                        "${currentMainEmotion.comfort}"
+                                        "${currentMainEmotion.comfort}"<br>
+                                        <span class="text-sky-600 font-bold not-italic mt-2 block">"${randomCheer}"</span>
                                     </p>
                                 </div>
                             </div>
@@ -691,7 +722,7 @@
             document.getElementById("print-modal").classList.add("hidden");
         }
 
-        // 복사할 때는 여전히 귀여운 동물 이모지가 함께 복사되도록 유지했습니다.
+        // 2. 패들릿용 전체 데이터 복사 및 새 창 이동 처리
         function copyFormContent() {
             const savedIds = JSON.parse(localStorage.getItem('animal_saved_cards') || '[]');
             if (savedIds.length === 0) {
@@ -723,10 +754,26 @@
                 }
             });
 
+            // 복사 완료 시 패들릿 창 자동 이동 처리
             navigator.clipboard.writeText(compiledText).then(() => {
-                alert("✨ 성찰 데이터가 클립보드에 복사되었습니다!\n패들릿이나 게시판에 붙여넣기(Ctrl+V) 하세요.");
+                alert("✨ 마음사전 결과 및 심층 성찰 파일이 자동으로 복사되었습니다!\n확인을 누르면 우리 학급 전용 공식 패들릿으로 연동 이동합니다.");
+                window.open("https://padlet.com/automotive260/padlet-ncld17n0tqw4ueam", "_blank");
             }).catch(() => {
-                alert("자동 복사 권한 오류가 발생했습니다. 직접 드래그하여 복사해 주세요.");
+                // navigator.clipboard 대안 처리
+                try {
+                    const tempInput = document.createElement("textarea");
+                    tempInput.value = compiledText;
+                    document.body.appendChild(tempInput);
+                    tempInput.select();
+                    document.execCommand("copy");
+                    document.body.removeChild(tempInput);
+                    
+                    alert("✨ 마음사전 결과 및 심층 성찰 파일이 자동으로 복사되었습니다!\n확인을 누르면 우리 학급 전용 공식 패들릿으로 연동 이동합니다.");
+                    window.open("https://padlet.com/automotive260/padlet-ncld17n0tqw4ueam", "_blank");
+                } catch(err) {
+                    alert("자동 복사 권한 오류가 발생했습니다. 직접 복사하신 후 패들릿으로 이동합니다.");
+                    window.open("https://padlet.com/automotive260/padlet-ncld17n0tqw4ueam", "_blank");
+                }
             });
         }
 
